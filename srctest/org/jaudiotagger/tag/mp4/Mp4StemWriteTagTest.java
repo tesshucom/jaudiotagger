@@ -48,7 +48,7 @@ public class Mp4StemWriteTagTest extends TestCase {
 
         final File testFile = AbstractTestCase.copyAudioToTmp("test.stem.mp4", new File("testWriteOneFieldALotLarger.stem.mp4"));
 
-        final Mp4AtomTree treeBefore = new Mp4AtomTree(new RandomAccessFile(testFile, "r"));
+        final Mp4AtomTree treeBefore = new Mp4AtomTree(testFile);
         final List<Mp4StcoBox> beforeStcos = treeBefore.getStcos();
         System.out.println("Chunk Offsets before (stco atoms): " + beforeStcos.size());
         // verify that all five tracks were recognized
@@ -66,7 +66,7 @@ public class Mp4StemWriteTagTest extends TestCase {
         audioFile.getTag().setField(FieldKey.TITLE, new String(chars));
         audioFile.commit();
 
-        final Mp4AtomTree treeAfter = new Mp4AtomTree(new RandomAccessFile(testFile, "r"));
+        final Mp4AtomTree treeAfter =  new Mp4AtomTree(testFile);
         final List<Mp4StcoBox> afterStcos = treeAfter.getStcos();
         System.out.println("Chunk Offsets after (stco atoms): " + afterStcos.size());
         assertEquals(beforeStcos.size(), afterStcos.size());
@@ -116,7 +116,7 @@ public class Mp4StemWriteTagTest extends TestCase {
             tag = (Mp4Tag) f.getTag();
 
             //Total FileSize must be larger, as the free atom in meta is only 844 big
-            assertEquals(1450641, testFile.length());
+            assertEquals(1451485, testFile.length());
 
             //AudioInfo
             //Time in seconds

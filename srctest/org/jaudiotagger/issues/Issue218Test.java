@@ -54,8 +54,7 @@ public class Issue218Test extends AbstractTestCase
         Exception ex=null;
         try
         {
-            RandomAccessFile raf = new RandomAccessFile(orig,"r");
-            Mp4AtomTree tree = new Mp4AtomTree(raf,false);
+            Mp4AtomTree tree = new Mp4AtomTree(orig);
             tree.printAtomTree();
         }
         catch(Exception e)

@@ -9,6 +9,8 @@ import org.jaudiotagger.tag.FieldKey;
 
 import java.io.File;
 import java.io.RandomAccessFile;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 
 /**
  * Test
@@ -27,7 +29,7 @@ public class Issue164Test extends AbstractTestCase
         Exception ex=null;
         try
         {
-            Mp4AtomTree atomTree = new Mp4AtomTree(new RandomAccessFile(orig, "r"));
+            Mp4AtomTree atomTree = new Mp4AtomTree(Files.newByteChannel(orig.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE));
             atomTree.printAtomTree();
 
             File testFile = AbstractTestCase.copyAudioToTmp("test164.m4a");

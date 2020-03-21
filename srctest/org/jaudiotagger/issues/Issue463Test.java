@@ -28,10 +28,8 @@ public class Issue463Test extends AbstractTestCase
 
 
             File testFile = AbstractTestCase.copyAudioToTmp("test116.m4a");
-            RandomAccessFile raf = new RandomAccessFile(testFile,"r");
-            Mp4AtomTree tree = new Mp4AtomTree(raf,false);
+            Mp4AtomTree tree = new Mp4AtomTree(testFile, false);
             tree.printAtomTree();
-            raf.close();
 
             AudioFile af = AudioFileIO.read(testFile);
             assertNotNull(af.getTag());
@@ -41,10 +39,9 @@ public class Issue463Test extends AbstractTestCase
             assertEquals("fred",af.getTag().getFirst(FieldKey.ARTIST));
             af.commit();
 
-            raf = new RandomAccessFile(testFile,"r");
-            tree = new Mp4AtomTree(raf,false);
+
+            tree = new Mp4AtomTree(testFile,false);
             tree.printAtomTree();
-            raf.close();
 
             af = AudioFileIO.read(testFile);
             assertNotNull(af.getTag());

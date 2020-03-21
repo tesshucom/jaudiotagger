@@ -28,7 +28,7 @@ public class Issue451Test extends AbstractTestCase
         try
         {
             //Now just createField tree
-            Mp4AtomTree atomTree = new Mp4AtomTree(new RandomAccessFile(testFile, "r"));
+            Mp4AtomTree atomTree = new Mp4AtomTree(testFile);
             atomTree.printAtomTree();
         }
         catch(Exception e)

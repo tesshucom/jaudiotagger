@@ -40,6 +40,7 @@ public class WavFileReader extends AudioFileReader2
 
     }
 
+    @Override
     protected GenericAudioHeader getEncodingInfo(Path path) throws CannotReadException, IOException
     {
         return new WavInfoReader(path.toString()).read(path);

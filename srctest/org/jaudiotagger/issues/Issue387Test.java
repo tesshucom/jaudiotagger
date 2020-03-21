@@ -31,7 +31,7 @@ public class Issue387Test extends AbstractTestCase
             af.getTagOrCreateAndSetDefault();
             af.commit();
 
-            Mp4AtomTree atomTree = new Mp4AtomTree(new RandomAccessFile(testFile, "r"));
+            Mp4AtomTree atomTree = new Mp4AtomTree(testFile);
             atomTree.printAtomTree();
 
         }

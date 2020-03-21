@@ -63,7 +63,7 @@ public class Issue291Test extends AbstractTestCase
        try
        {
            testFile = AbstractTestCase.copyAudioToTmp("test83.mp4");
-           Mp4AtomTree atomTree = new Mp4AtomTree(new RandomAccessFile(testFile, "r"));
+           Mp4AtomTree atomTree = new Mp4AtomTree(testFile);
            atomTree.printAtomTree();
        }
        catch (Exception e)

@@ -608,6 +608,8 @@ public class M4aWriteTagTest extends TestCase
             //Starting filesize
             assertEquals(TEST_FILE1_SIZE, testFile.length());
 
+            new Mp4AtomTree(testFile).printAtomTree();
+
             AudioFile f = AudioFileIO.read(testFile);
             Mp4Tag tag = (Mp4Tag) f.getTag();
 
@@ -623,7 +625,7 @@ public class M4aWriteTagTest extends TestCase
             tag = (Mp4Tag) f.getTag();
 
             //Total FileSize should now be larger
-            assertEquals(3901001, testFile.length());
+            assertEquals(3902116, testFile.length());
 
             //AudioInfo
             //Time in seconds
@@ -747,6 +749,7 @@ public class M4aWriteTagTest extends TestCase
     /**
      * Test removing the tag from the file.
      */
+
     public void testDeleteTag()
     {
         Exception exceptionCaught = null;
@@ -1607,7 +1610,7 @@ public class M4aWriteTagTest extends TestCase
         {
 
             File testFile = AbstractTestCase.copyAudioToTmp("test4.m4a", new File("testWriteNewMetadata.m4a"));
-            Mp4AtomTree atomTree = new Mp4AtomTree(new RandomAccessFile(testFile, "r"));
+            Mp4AtomTree atomTree = new Mp4AtomTree(testFile);
             atomTree.printAtomTree();
 
             AudioFile f = AudioFileIO.read(testFile);

@@ -63,7 +63,7 @@ public class Issue220Test extends AbstractTestCase
         {
             testFile = AbstractTestCase.copyAudioToTmp("test41.m4a");
 
-            Mp4AtomTree atomTree = new Mp4AtomTree(new RandomAccessFile(testFile, "r"));
+            Mp4AtomTree atomTree = new Mp4AtomTree(testFile);
             atomTree.printAtomTree();
 
             //Read File okay
@@ -80,7 +80,7 @@ public class Issue220Test extends AbstractTestCase
 
             //Read file again okay
 
-            atomTree = new Mp4AtomTree(new RandomAccessFile(testFile, "r"));
+            atomTree = new Mp4AtomTree(testFile);
             atomTree.printAtomTree();
 
             af = AudioFileIO.read(testFile);

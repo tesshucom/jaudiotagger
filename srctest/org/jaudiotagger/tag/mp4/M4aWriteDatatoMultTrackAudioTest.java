@@ -27,7 +27,7 @@ public class M4aWriteDatatoMultTrackAudioTest extends TestCase
             File testFile = AbstractTestCase.copyAudioToTmp("test16.m4a", new File("testWriteMultiTrack1.m4a"));
 
             //First let's just createField tree
-            Mp4AtomTree atomTree = new Mp4AtomTree(new RandomAccessFile(testFile, "r"));
+            Mp4AtomTree atomTree =  new Mp4AtomTree(testFile);
             atomTree.printAtomTree();
 
             //Now we try to make some changes
@@ -44,7 +44,7 @@ public class M4aWriteDatatoMultTrackAudioTest extends TestCase
             System.out.println(tag);
 
             //See tree again
-            atomTree = new Mp4AtomTree(new RandomAccessFile(testFile, "r"));
+            atomTree = new Mp4AtomTree(testFile);
             atomTree.printAtomTree();
 
             //Ease of use methods for common fields
@@ -71,7 +71,7 @@ public class M4aWriteDatatoMultTrackAudioTest extends TestCase
             File testFile = AbstractTestCase.copyAudioToTmp("test16.m4a", new File("testWriteMultiTrack3.m4a"));
 
             //First lets just createField tree
-            Mp4AtomTree atomTree = new Mp4AtomTree(new RandomAccessFile(testFile, "r"));
+            Mp4AtomTree atomTree =  new Mp4AtomTree(testFile);
             atomTree.printAtomTree();
 
             //Now we try to make some changes
@@ -88,7 +88,7 @@ public class M4aWriteDatatoMultTrackAudioTest extends TestCase
             System.out.println(tag);
 
             //See tree again
-            atomTree = new Mp4AtomTree(new RandomAccessFile(testFile, "r"));
+            atomTree = new Mp4AtomTree(testFile);
             atomTree.printAtomTree();
 
             //Ease of use methods for common fields
@@ -115,7 +115,7 @@ public class M4aWriteDatatoMultTrackAudioTest extends TestCase
             File testFile = AbstractTestCase.copyAudioToTmp("test16.m4a", new File("testWriteMultiTrack4.m4a"));
 
             //First lets just createField tree
-            Mp4AtomTree atomTree = new Mp4AtomTree(new RandomAccessFile(testFile, "r"));
+            Mp4AtomTree atomTree = new Mp4AtomTree(testFile);
             atomTree.printAtomTree();
 
             //Now we try to make some changes
@@ -131,7 +131,7 @@ public class M4aWriteDatatoMultTrackAudioTest extends TestCase
             System.out.println(tag);
 
             //See tree again
-            atomTree = new Mp4AtomTree(new RandomAccessFile(testFile, "r"));
+            atomTree =  new Mp4AtomTree(testFile);
             atomTree.printAtomTree();
 
             //Ease of use methods for common fields
@@ -152,13 +152,15 @@ public class M4aWriteDatatoMultTrackAudioTest extends TestCase
      *
      * TODO:Test incomplete
      */
-    public void testWriteFileOption8CannoutUseTopLevelFree()
+    public void testWriteFileOption72CannoutUseTopLevelFree()
     {
         Exception exceptionCaught = null;
         try
         {
             File testFile = AbstractTestCase.copyAudioToTmp("test16.m4a", new File("testWriteMultiTrack8.m4a"));
             AudioFile f = AudioFileIO.read(testFile);
+            new Mp4AtomTree(testFile).printAtomTree();
+
             Tag tag = f.getTag();
 
             //Change values
@@ -409,7 +411,7 @@ public class M4aWriteDatatoMultTrackAudioTest extends TestCase
 
             //Visual check of atom tree
             testFile = new File("testdatatmp", "testWriteMultiTrack7.m4a");
-            Mp4AtomTree atomTree = new Mp4AtomTree(new RandomAccessFile(testFile, "r"));
+            Mp4AtomTree atomTree = new Mp4AtomTree(testFile);
             atomTree.printAtomTree();
 
         }

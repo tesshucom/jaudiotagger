@@ -29,6 +29,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;
@@ -267,7 +268,7 @@ public class Mp4BoxHeader
      * @throws java.io.IOException
      * @return
      */
-    public static Mp4BoxHeader seekWithinLevel(FileChannel fc, String id) throws IOException
+    public static Mp4BoxHeader seekWithinLevel(SeekableByteChannel fc, String id) throws IOException
     {
         logger.finer("Started searching for:" + id + " in file at:" + fc.position());
 

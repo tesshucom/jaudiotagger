@@ -26,7 +26,7 @@ public class Issue433Test extends AbstractTestCase
 
         File testFile = AbstractTestCase.copyAudioToTmp("test112.m4a",new File("test112.m4a"));
 
-        Mp4AtomTree atomTree = new Mp4AtomTree(new RandomAccessFile(testFile, "r"));
+        Mp4AtomTree atomTree = new Mp4AtomTree(testFile);
         atomTree.printAtomTree();
 
         AudioFile af = AudioFileIO.read(testFile);
@@ -34,7 +34,7 @@ public class Issue433Test extends AbstractTestCase
         af.getTag().setField(FieldKey.ALBUM,"fredwwwwwwwwwwwwwwwwwwwwwwww");
         af.commit();
 
-        atomTree = new Mp4AtomTree(new RandomAccessFile(testFile, "r"));
+        atomTree = new Mp4AtomTree(testFile);
         atomTree.printAtomTree();
         af = AudioFileIO.read(testFile);
         assertEquals("fredwwwwwwwwwwwwwwwwwwwwwwww",af.getTag().getFirst(FieldKey.ALBUM));
@@ -52,7 +52,7 @@ public class Issue433Test extends AbstractTestCase
 
         File testFile = AbstractTestCase.copyAudioToTmp("test112.m4a",new File("test112WriteSmall.m4a"));
 
-        Mp4AtomTree atomTree = new Mp4AtomTree(new RandomAccessFile(testFile, "r"));
+        Mp4AtomTree atomTree = new Mp4AtomTree(testFile);
         atomTree.printAtomTree();
 
         AudioFile af = AudioFileIO.read(testFile);
@@ -60,7 +60,7 @@ public class Issue433Test extends AbstractTestCase
         af.getTag().setField(FieldKey.ALBUM,"fred");
         af.commit();
 
-        atomTree = new Mp4AtomTree(new RandomAccessFile(testFile, "r"));
+        atomTree = new Mp4AtomTree(testFile);
         atomTree.printAtomTree();
         af = AudioFileIO.read(testFile);
         assertEquals("fred",af.getTag().getFirst(FieldKey.ALBUM));
@@ -78,7 +78,7 @@ public class Issue433Test extends AbstractTestCase
 
         File testFile = AbstractTestCase.copyAudioToTmp("test141.m4a",new File("test141Large.m4a"));
 
-        Mp4AtomTree atomTree = new Mp4AtomTree(new RandomAccessFile(testFile, "r"));
+        Mp4AtomTree atomTree = new Mp4AtomTree(testFile);
         atomTree.printAtomTree();
 
         AudioFile af = AudioFileIO.read(testFile);
@@ -86,7 +86,7 @@ public class Issue433Test extends AbstractTestCase
         af.getTag().setField(FieldKey.ALBUM,"fredwwwwwwwwwwwwwwwwwwwwwwww");
         af.commit();
 
-        atomTree = new Mp4AtomTree(new RandomAccessFile(testFile, "r"));
+        atomTree = new Mp4AtomTree(testFile);
         atomTree.printAtomTree();
         af = AudioFileIO.read(testFile);
         assertEquals("fredwwwwwwwwwwwwwwwwwwwwwwww",af.getTag().getFirst(FieldKey.ALBUM));
@@ -104,7 +104,7 @@ public class Issue433Test extends AbstractTestCase
 
         File testFile = AbstractTestCase.copyAudioToTmp("test141.m4a",new File("test141Small.m4a"));
 
-        Mp4AtomTree atomTree = new Mp4AtomTree(new RandomAccessFile(testFile, "r"));
+        Mp4AtomTree atomTree = new Mp4AtomTree(testFile);
         atomTree.printAtomTree();
 
         AudioFile af = AudioFileIO.read(testFile);
@@ -112,7 +112,7 @@ public class Issue433Test extends AbstractTestCase
         af.getTag().setField(FieldKey.ALBUM,"fred");
         af.commit();
 
-        atomTree = new Mp4AtomTree(new RandomAccessFile(testFile, "r"));
+        atomTree = new Mp4AtomTree(testFile);
         atomTree.printAtomTree();
         af = AudioFileIO.read(testFile);
         assertEquals("fred",af.getTag().getFirst(FieldKey.ALBUM));

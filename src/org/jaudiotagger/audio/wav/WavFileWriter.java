@@ -26,7 +26,7 @@ import java.nio.file.Path;
 
 public class WavFileWriter extends AudioFileWriter2
 {
-   @Override
+    @Override
     protected void writeTag(Tag tag, Path file) throws CannotWriteException
     {
         new WavTagWriter(file.toString()).write(tag, file);

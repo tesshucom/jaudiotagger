@@ -30,6 +30,9 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
+import java.nio.channels.SeekableByteChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.logging.Logger;
 
 /**
@@ -87,9 +90,9 @@ public class Mp4InfoReader
         return false;
     }
 
-    public GenericAudioHeader read(RandomAccessFile raf) throws CannotReadException, IOException
+    public GenericAudioHeader read(Path file) throws CannotReadException, IOException
     {
-        FileChannel fc = raf.getChannel();
+        SeekableByteChannel fc = Files.newByteChannel(file);
         Mp4AudioHeader info = new Mp4AudioHeader();
 
         //File Identification
@@ -353,9 +356,7 @@ public class Mp4InfoReader
         info.setFormat(info.getEncodingType());
 
         //Build AtomTree to ensure it is valid, this means we can detect any problems early on
-        new Mp4AtomTree(raf,false);
+        new Mp4AtomTree(fc,false);
         return info;
     }
-
-
 }
