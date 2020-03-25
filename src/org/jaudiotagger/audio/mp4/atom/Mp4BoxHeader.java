@@ -43,7 +43,7 @@ import java.util.logging.Logger;
  * All boxes consist of a 4 byte box length (big Endian), and then a 4 byte identifier, this is the header
  * which is model in this class.
  *
- * The length includes the length of the box including the identifier and the length itself.
+ * The length includes the length of the box including the header itself.
  * Then they may contain data and/or sub boxes, if they contain subboxes they are known as a parent box. Parent boxes
  * shouldn't really contain data, but sometimes they do.
  *

@@ -347,7 +347,7 @@ public class Mp4TagWriter
             int sizeOfExistingIlstAtom = 0;
             int sizeRequiredByNewIlstAtom;
             int positionOfNewIlstAtomRelativeToMoovAtom;
-            int positionInExistingFileOfWhereNewIlstAtomShouldBeWritten;
+            int positionOfStartOfIlstAtomInMoovBuffer;
             int sizeOfExistingMetaLevelFreeAtom;
             int positionOfTopLevelFreeAtom;
             int sizeOfExistingTopLevelFreeAtom;
@@ -404,23 +404,23 @@ public class Mp4TagWriter
                         sizeOfExistingIlstAtom = ilstHeader.getLength();
 
                         //Relative means relative to moov buffer after moov header
-                        positionInExistingFileOfWhereNewIlstAtomShouldBeWritten = (int) ilstHeader.getFilePos();
-                        positionOfNewIlstAtomRelativeToMoovAtom = (int) (positionInExistingFileOfWhereNewIlstAtomShouldBeWritten - (moovHeader.getFilePos() + Mp4BoxHeader.HEADER_LENGTH));
+                        positionOfStartOfIlstAtomInMoovBuffer = (int) ilstHeader.getFilePos();
+                        positionOfNewIlstAtomRelativeToMoovAtom = (int) (positionOfStartOfIlstAtomInMoovBuffer - (moovHeader.getFilePos() + Mp4BoxHeader.HEADER_LENGTH));
                     }
                     else
                     {
                         //Place ilst immediately after existing hdlr atom
                         if (hdlrMetaHeader != null)
                         {
-                            positionInExistingFileOfWhereNewIlstAtomShouldBeWritten = (int) hdlrMetaHeader.getFileEndPos();
-                            positionOfNewIlstAtomRelativeToMoovAtom = (int) (positionInExistingFileOfWhereNewIlstAtomShouldBeWritten - (moovHeader.getFilePos() + Mp4BoxHeader.HEADER_LENGTH));
+                            positionOfStartOfIlstAtomInMoovBuffer = (int) hdlrMetaHeader.getFileEndPos();
+                            positionOfNewIlstAtomRelativeToMoovAtom = (int) (positionOfStartOfIlstAtomInMoovBuffer - (moovHeader.getFilePos() + Mp4BoxHeader.HEADER_LENGTH));
                         }
                         //Place ilst after data fields in meta atom
                         //TODO Should we create a hdlr atom
                         else
                         {
-                            positionInExistingFileOfWhereNewIlstAtomShouldBeWritten = (int) metaHeader.getFilePos() + Mp4BoxHeader.HEADER_LENGTH + Mp4MetaBox.FLAGS_LENGTH;
-                            positionOfNewIlstAtomRelativeToMoovAtom = (int) ((positionInExistingFileOfWhereNewIlstAtomShouldBeWritten) - (moovHeader.getFilePos() + Mp4BoxHeader.HEADER_LENGTH));
+                            positionOfStartOfIlstAtomInMoovBuffer = (int) metaHeader.getFilePos() + Mp4BoxHeader.HEADER_LENGTH + Mp4MetaBox.FLAGS_LENGTH;
+                            positionOfNewIlstAtomRelativeToMoovAtom = (int) ((positionOfStartOfIlstAtomInMoovBuffer) - (moovHeader.getFilePos() + Mp4BoxHeader.HEADER_LENGTH));
                         }
                     }
                 }
@@ -428,7 +428,7 @@ public class Mp4TagWriter
                 {
                     //There no ilst or meta header so we set to position where it would be if it existed
                     positionOfNewIlstAtomRelativeToMoovAtom = moovHeader.getLength() - Mp4BoxHeader.HEADER_LENGTH;
-                    positionInExistingFileOfWhereNewIlstAtomShouldBeWritten = (int) (moovHeader.getFileEndPos());
+                    positionOfStartOfIlstAtomInMoovBuffer = (int) (moovHeader.getFileEndPos());
                 }
             }
             //There no udta header so we are going to create a new structure, but we have to be aware that there might be
@@ -440,13 +440,13 @@ public class Mp4TagWriter
                 // as part of the moov atom (and not just bulk copied via writeDataAfterIlst())
                 if (metaHeader != null)
                 {
-                    positionInExistingFileOfWhereNewIlstAtomShouldBeWritten = (int) trakHeader.getFileEndPos();
-                    positionOfNewIlstAtomRelativeToMoovAtom = (int) (positionInExistingFileOfWhereNewIlstAtomShouldBeWritten - (moovHeader.getFilePos() + Mp4BoxHeader.HEADER_LENGTH));
+                    positionOfStartOfIlstAtomInMoovBuffer = (int) trakHeader.getFileEndPos();
+                    positionOfNewIlstAtomRelativeToMoovAtom = (int) (positionOfStartOfIlstAtomInMoovBuffer - (moovHeader.getFilePos() + Mp4BoxHeader.HEADER_LENGTH));
                 }
                 else
                 {
                     //There no udta,ilst or meta header so we set to position where it would be if it existed
-                    positionInExistingFileOfWhereNewIlstAtomShouldBeWritten = (int) (moovHeader.getFileEndPos());
+                    positionOfStartOfIlstAtomInMoovBuffer = (int) (moovHeader.getFileEndPos());
                     positionOfNewIlstAtomRelativeToMoovAtom = moovHeader.getLength() - Mp4BoxHeader.HEADER_LENGTH;
                 }
             }
@@ -562,7 +562,7 @@ public class Mp4TagWriter
                                 topLevelFreeAtomComesBeforeMdatAtomAndAfterMetadata,
                                 neroTagsHeader,
                                 sizeOfExistingMetaLevelFreeAtom,
-                                positionInExistingFileOfWhereNewIlstAtomShouldBeWritten,
+                                positionOfStartOfIlstAtomInMoovBuffer,
                                 sizeOfExistingIlstAtom,
                                 positionOfTopLevelFreeAtom,
                                 additionalMetaSizeThatWontFitWithinMetaAtom);
@@ -952,7 +952,7 @@ public class Mp4TagWriter
                                          boolean topLevelFreeAtomComesBeforeMdatAtomAndAfterMetadata,
                                          Mp4BoxHeader neroTagsHeader,
                                          int sizeOfExistingMetaLevelFreeAtom,
-                                         int positionInExistingFileOfWhereNewIlstAtomShouldBeWritten,
+                                         int positionOfStartOfIlstAtomInMoovBuffer,
                                          int existingSizeOfIlstData,
                                          int topLevelFreeSize,
                                          int additionalMetaSizeThatWontFitWithinMetaAtom) throws IOException
@@ -1015,7 +1015,7 @@ public class Mp4TagWriter
 
             writeRestOfMoovHeaderAfterNewIlistAndAmendedTopLevelFreeAtom(
                     fc,
-                    positionInExistingFileOfWhereNewIlstAtomShouldBeWritten,
+                    positionOfStartOfIlstAtomInMoovBuffer,
                     moovHeader,
                     moovBuffer,
                     additionalMetaSizeThatWontFitWithinMetaAtom,
@@ -1062,7 +1062,7 @@ public class Mp4TagWriter
      *
      * @param udtaHeader
      * @param fc
-     * @param positionOfNewIlstAtomRelativeToMoovAtom
+     * @param positionOfStartOfIlstAtomInMoovBuffer
      * @param moovHeader
      * @param moovBuffer
      * @param mdatHeader
@@ -1075,7 +1075,7 @@ public class Mp4TagWriter
     private void  writeHaveExistingMetadata(Mp4BoxHeader udtaHeader,
                                             Mp4BoxHeader metaHeader,
                                             SeekableByteChannel fc,
-                                            int positionOfNewIlstAtomRelativeToMoovAtom,
+                                            int positionOfStartOfIlstAtomInMoovBuffer,
                                             Mp4BoxHeader moovHeader,
                                             ByteBuffer moovBuffer,
                                             Mp4BoxHeader mdatHeader,
@@ -1103,12 +1103,13 @@ public class Mp4TagWriter
         //Position to start of Moov Header in File
         fc.position(moovHeader.getFilePos());
 
-        //Write modified MoovHeader
+        //Write MoovHeader (with new larger size)
         fc.write(moovHeader.getHeaderData());
 
-        //Now write from this edited buffer up until location of start of ilst atom
+        //Now write from updated Moov buffer up until location of start of ilst atom
+        //(Moov buffer contains all of Moov except Mov header)
         moovBuffer.rewind();
-        moovBuffer.limit(positionOfNewIlstAtomRelativeToMoovAtom);
+        moovBuffer.limit(positionOfStartOfIlstAtomInMoovBuffer);
         fc.write(moovBuffer);
 
         //If the top level free large enough to provide the extra space required then we didnt have to move the mdat
@@ -1122,7 +1123,7 @@ public class Mp4TagWriter
 
             writeRestOfMoovHeaderAfterNewIlistAndAmendedTopLevelFreeAtom(
                     fc,
-                    positionOfNewIlstAtomRelativeToMoovAtom,
+                    positionOfStartOfIlstAtomInMoovBuffer,
                     moovHeader,
                     moovBuffer,
                     additionalMetaSizeThatWontFitWithinMetaAtom,
@@ -1139,33 +1140,26 @@ public class Mp4TagWriter
             //Position after MoovBuffer in file
             fc.position(endOfOriginalMoovAtom);
 
-            //Buffer to hold all data after moov buffer
-            ByteBuffer chunkBuffer = ByteBuffer.allocate((int)(fc.size() - fc.position()));
+            //Shift the existing data after Moov Atom by the increased size of ilst data
+            shiftDataByOffset(fc, additionalMetaSizeThatWontFitWithinMetaAtom);
 
-            //Read Data Into Buffer so not overwritten by larger new ilst
-            fc.read(chunkBuffer);
-
-            //Now Write new ilst data
-            fc.position(moovHeader.getFilePos() + positionOfNewIlstAtomRelativeToMoovAtom + 8);
+            //Now Write new ilst data, starting at the same location as the oldiLst atom
+            fc.position(moovHeader.getFilePos() + Mp4BoxHeader.HEADER_LENGTH + positionOfStartOfIlstAtomInMoovBuffer);
             fc.write(newIlstData);
 
-            //Now Write any data that existed in MoovHeader after the old ilst atom
+            //Now Write any data that existed in MoovHeader after the old ilst atom (if any)
             moovBuffer.limit(moovBuffer.capacity());
-            moovBuffer.position(positionOfNewIlstAtomRelativeToMoovAtom + existingSizeOfIlstData);
+            moovBuffer.position(positionOfStartOfIlstAtomInMoovBuffer + existingSizeOfIlstData);
             if(moovBuffer.position() < moovBuffer.capacity())
             {
                 fc.write(moovBuffer);
             }
-
-            //Now Write back the data to the file so now after new ilst location
-            chunkBuffer.flip();
-            fc.write(chunkBuffer);
         }
     }
 
     private void writeRestOfMoovHeaderAfterNewIlistAndAmendedTopLevelFreeAtom(
             SeekableByteChannel fc,
-            int positionOfNewIlstAtomRelativeToMoovAtom,
+            int positionOfStartOfIlstAtomInMoovBuffer,
             Mp4BoxHeader moovHeader,
             ByteBuffer moovBuffer,
             int additionalMetaSizeThatWontFitWithinMetaAtom,
@@ -1178,7 +1172,7 @@ public class Mp4TagWriter
         //but we replace any neroTags atoms with free atoms as these cause problems
         if (neroTagsHeader != null)
         {
-            moovBuffer.position(positionOfNewIlstAtomRelativeToMoovAtom + existingSizeOfIlstData);
+            moovBuffer.position(positionOfStartOfIlstAtomInMoovBuffer + existingSizeOfIlstData);
             writeFromEndOfIlstToNeroTagsAndMakeNeroFree(moovHeader, moovBuffer, fc, neroTagsHeader);
 
             //Shrink the top level free atom to accomodate the extra data
@@ -1188,7 +1182,7 @@ public class Mp4TagWriter
         {
             //Write the remaining children under moov that come after ilst atom
             moovBuffer.limit(moovBuffer.capacity());
-            moovBuffer.position(positionOfNewIlstAtomRelativeToMoovAtom + existingSizeOfIlstData);
+            moovBuffer.position(positionOfStartOfIlstAtomInMoovBuffer + existingSizeOfIlstData);
             if(moovBuffer.position() < moovBuffer.capacity())
             {
                 fc.write(moovBuffer);
@@ -1198,6 +1192,7 @@ public class Mp4TagWriter
             adjustTopLevelFreeAtom(fc, topLevelFreeSize, additionalMetaSizeThatWontFitWithinMetaAtom);
         }
     }
+
     /**
      * If any data between existing {@code ilst} atom and {@code tags} atom write it to new file, then convertMetadata
      * {@code tags} atom to a {@code free} atom.

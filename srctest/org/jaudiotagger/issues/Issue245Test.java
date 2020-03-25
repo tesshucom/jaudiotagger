@@ -3,6 +3,7 @@ package org.jaudiotagger.issues;
 import org.jaudiotagger.AbstractTestCase;
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
+import org.jaudiotagger.audio.mp4.Mp4AtomTree;
 import org.jaudiotagger.audio.wav.WavOptions;
 import org.jaudiotagger.tag.FieldKey;
 import org.jaudiotagger.tag.Tag;
@@ -371,6 +372,8 @@ public class Issue245Test extends AbstractTestCase
         {
             testFile = AbstractTestCase.copyAudioToTmp("test.m4a");
 
+            new Mp4AtomTree(testFile).printAtomTree();
+
             //Read File okay
             AudioFile af = AudioFileIO.read(testFile);
             Tag tag = af.getTag();
@@ -388,6 +391,9 @@ public class Issue245Test extends AbstractTestCase
             newartwork.setDescription("freddy");
             tag.setField(newartwork);
             af.commit();
+
+            new Mp4AtomTree(testFile).printAtomTree();
+
             af = AudioFileIO.read(testFile);
             tag = af.getTag();
             assertEquals(1, tag.getArtworkList().size());
@@ -404,6 +410,7 @@ public class Issue245Test extends AbstractTestCase
             af = AudioFileIO.read(testFile);
             tag = af.getTag();
             assertEquals(0, tag.getArtworkList().size());
+
 
         }
         catch (Exception e)
