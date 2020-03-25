@@ -30,7 +30,6 @@ import org.jaudiotagger.utils.tree.DefaultMutableTreeNode;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -598,35 +597,60 @@ public class Mp4TagWriter
     }
 
     /**
-     * Write the remainder of data in read channel to write channel data in {@link TagOptionSingleton#getWriteChunkSize()}
-     * chunks, needed if writing large amounts of data.
-     *
-     * @param fileReadChannel
-     * @param fileWriteChannel
+     * Shift the remainder of data from current position to position + offset
+     * Reads/writes starting from end of file in chunks so works on large files on low memory systems
+     * @param  fc
+     * @param  offset
      * @throws IOException
      * @throws CannotWriteException
      */
-    private void writeDataInChunks(FileChannel fileReadChannel, FileChannel fileWriteChannel) throws IOException, CannotWriteException
+    private void shiftDataByOffset(SeekableByteChannel fc, int offset) throws IOException
     {
-        long amountToBeWritten = fileReadChannel.size() - fileReadChannel.position();
-        long written = 0;
-        long chunksize = TagOptionSingleton.getInstance().getWriteChunkSize();
-        long count = amountToBeWritten / chunksize;
+        //TagOptionSingleton.getInstance().setWriteChunkSize(30000);
 
-        long mod = amountToBeWritten % chunksize;
+        long startPos           = fc.position();
+        long amountToBeWritten  = fc.size() - startPos;
+        int  chunkSize          = (int)TagOptionSingleton.getInstance().getWriteChunkSize();
+        long count              = amountToBeWritten / chunkSize;
+        long mod                = amountToBeWritten % chunkSize;
+
+        //Buffer to hold a chunk
+        ByteBuffer chunkBuffer = ByteBuffer.allocate(chunkSize);
+
+        //Start from end of file
+        long readPos             = fc.size() - chunkSize;
+        long writePos            = (fc.size() - chunkSize) + offset;
+
         for (int i = 0; i < count; i++)
         {
-            written += fileWriteChannel.transferFrom(fileReadChannel, fileWriteChannel.position(), chunksize);
-            fileWriteChannel.position(fileWriteChannel.position() + chunksize);
+            //Read Data Into Buffer starting from end of file
+            fc.position(readPos);
+            fc.read(chunkBuffer);
+
+            //Now write to new location
+            chunkBuffer.flip();
+            fc.position(writePos);
+            fc.write(chunkBuffer);
+
+            //Rewind so can use in next iteration of loop
+            chunkBuffer.rewind();
+
+            readPos-=chunkSize;
+            writePos-=chunkSize;
         }
 
         if(mod > 0)
         {
-            written += fileWriteChannel.transferFrom(fileReadChannel, fileWriteChannel.position(), mod);
-            if (written != amountToBeWritten)
-            {
-                throw new CannotWriteException("Was meant to write " + amountToBeWritten + " bytes but only written " + written + " bytes");
-            }
+            chunkBuffer = ByteBuffer.allocate((int)mod);
+            fc.position(startPos);
+            System.out.println("ReadPosition:"+fc.position());
+            fc.read(chunkBuffer);
+
+            //Now write to new location
+            chunkBuffer.flip();
+            fc.position(startPos + offset);
+            System.out.println("WritePosition:"+fc.position());
+            fc.write(chunkBuffer);
         }
     }
 
@@ -885,11 +909,7 @@ public class Mp4TagWriter
             //Position after MoovBuffer in file
             fc.position(endOfOriginalMoovAtom);
 
-            //Buffer to hold all data after moov buffer
-            ByteBuffer chunkBuffer = ByteBuffer.allocate((int)(fc.size() - fc.position()));
-
-            //Read Data Into Buffer so not overwritten by larger new ilst
-            fc.read(chunkBuffer);
+            shiftDataByOffset(fc, udtaHeader.getLength());
 
             //Go back to position just after MoovBuffer in file
             fc.position(endOfOriginalMoovAtom);
@@ -903,10 +923,6 @@ public class Mp4TagWriter
 
             //Write new ilst data
             fc.write(newIlstData);
-
-            //Now Write back the data to the file so now after new ilst location
-            chunkBuffer.flip();
-            fc.write(chunkBuffer);
         }
     }
 
