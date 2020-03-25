@@ -105,6 +105,7 @@ Summarise Changes
 #297:Allow Wav files that are larger than 2GB
 #298:Move to Java 1.8
 #071:Rewrite Mp4 TagWriter so it doesn't need to use temporary files
+#247:Not able to save this m4a
 
 2.2.5
 #033:Added getAudioStartPos() and getAudioEndPos() methods to AudioHeader interface and implemented for most formats
