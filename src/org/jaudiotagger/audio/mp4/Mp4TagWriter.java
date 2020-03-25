@@ -561,7 +561,6 @@ public class Mp4TagWriter
                                 sizeOfExistingTopLevelFreeAtom,
                                 topLevelFreeAtomComesBeforeMdatAtomAndAfterMetadata,
                                 neroTagsHeader,
-                                sizeOfExistingMetaLevelFreeAtom,
                                 positionOfStartOfIlstAtomInMoovBuffer,
                                 sizeOfExistingIlstAtom,
                                 positionOfTopLevelFreeAtom,
@@ -951,7 +950,6 @@ public class Mp4TagWriter
                                          int sizeOfExistingTopLevelFreeAtom,
                                          boolean topLevelFreeAtomComesBeforeMdatAtomAndAfterMetadata,
                                          Mp4BoxHeader neroTagsHeader,
-                                         int sizeOfExistingMetaLevelFreeAtom,
                                          int positionOfStartOfIlstAtomInMoovBuffer,
                                          int existingSizeOfIlstData,
                                          int topLevelFreeSize,
@@ -1032,28 +1030,20 @@ public class Mp4TagWriter
             //Position after MoovBuffer in file
             fc.position(endOfOriginalMoovAtom);
 
-            //Buffer to hold all data after moov buffer
-            ByteBuffer chunkBuffer = ByteBuffer.allocate((int)(fc.size() - fc.position()));
+            //Shift the existing data after Moov Atom by the size of the new meta atom (includes ilst under it)
+            shiftDataByOffset(fc, metaBox.getHeader().getLength());
 
-            //Read Data Into Buffer so not overwritten by larger new ilst
-            fc.read(chunkBuffer);
-
-            //Go back to position just after MoovBuffer in file
+            //Now Write new ilst data, continuing from the end of the original Moov atom
             fc.position(endOfOriginalMoovAtom);
 
-            //Now Write new atoms required for holding metadata under udta/meta/hdlr
             //Write our newly constructed meta/hdlr headers (required for ilst)
             fc.write(metaBox.getHeader().getHeaderData());
             fc.write(metaBox.getData());
             fc.write(hdlrBox.getHeader().getHeaderData());
             fc.write(hdlrBox.getData());
 
-            //Write new ilst data
+            //Write te actual ilst data
             fc.write(newIlstData);
-
-            //Now Write back the data to the file so now after new ilst location
-            chunkBuffer.flip();
-            fc.write(chunkBuffer);
         }
     }
 
