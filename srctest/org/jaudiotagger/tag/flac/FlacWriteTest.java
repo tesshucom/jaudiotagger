@@ -157,10 +157,6 @@ public class FlacWriteTest extends TestCase
             exceptionCaught = e;
         }
         assertNull(exceptionCaught);
-
-
-
-
     }
 
     public void testWriteAllFieldsToFileSmallChunkSize()
