@@ -5,11 +5,7 @@ import java.io.IOException;
 
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
-import org.jaudiotagger.audio.exceptions.CannotReadException;
-import org.jaudiotagger.audio.exceptions.CannotWriteException;
-import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException;
-import org.jaudiotagger.audio.exceptions.NoWritePermissionsException;
-import org.jaudiotagger.audio.exceptions.ReadOnlyFileException;
+import org.jaudiotagger.audio.exceptions.*;
 import org.jaudiotagger.tag.FieldDataInvalidException;
 import org.jaudiotagger.tag.FieldKey;
 import org.jaudiotagger.tag.Tag;
@@ -27,7 +23,7 @@ public class FilePermissionsTest {
 			boolean threwException = false;
 			try {
 				setFieldAndCommit(testFile, false);
-			} catch (NoWritePermissionsException success) {
+			} catch (Exception success) {
 				threwException = true;
 			}
 			assertTrue("Expected to throw " + NoWritePermissionsException.class.getSimpleName() + " but didn't",
@@ -60,10 +56,10 @@ public class FilePermissionsTest {
 	        boolean threwException = false;
 	        try {
 	        	setFieldAndCommit(testFile, false);
-	        } catch(NoWritePermissionsException success) {
+	        } catch(Exception success) {
 	        	threwException=true;
 	        }
-	        assertTrue("Expected to throw " + NoWritePermissionsException.class.getSimpleName() + " but didn't", threwException);
+	        assertTrue("Expected to throw " + UnableToModifyFileException.class.getSimpleName() + " but didn't", threwException);
 		} finally {
 			testFile.delete();
 		}

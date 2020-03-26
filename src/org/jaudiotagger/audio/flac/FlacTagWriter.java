@@ -25,6 +25,7 @@ import org.jaudiotagger.audio.flac.metadatablock.*;
 import org.jaudiotagger.tag.Tag;
 import org.jaudiotagger.tag.TagOptionSingleton;
 import org.jaudiotagger.tag.flac.FlacTag;
+import org.jaudiotagger.utils.ShiftData;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -410,8 +411,6 @@ public class FlacTagWriter
      */
     private void insertUsingChunks(Path file, Tag tag, FileChannel fc, MetadataBlockInfo blockInfo, FlacStreamReader flacStream, int neededRoom, int availableRoom) throws IOException, UnsupportedEncodingException
     {
-        long originalFileSize = fc.size();
-
         //Find end of metadata blocks (start of Audio), i.e start of Flac + 4 bytes for 'fLaC', 4 bytes for streaminfo header and
         //34 bytes for streaminfo and then size of all the other existing blocks
         long audioStart =flacStream.getStartOfFlacInFile()
@@ -424,50 +423,12 @@ public class FlacTagWriter
         int extraSpaceRequired = neededRoom - availableRoom;
         logger.config(file + " Audio needs shifting:"+extraSpaceRequired);
 
-        //ChunkSize must be at least as large as the extra space required to write the metadata
-        int chunkSize = (int)TagOptionSingleton.getInstance().getWriteChunkSize();
-        if(chunkSize < extraSpaceRequired)
-        {
-            chunkSize = extraSpaceRequired;
-        }
-
-        Queue<ByteBuffer> queue = new LinkedBlockingQueue<>();
-
-        //Read first chunk of audio
         fc.position(audioStart);
-        {
-            ByteBuffer audioBuffer = ByteBuffer.allocateDirect(chunkSize);
-            fc.read(audioBuffer);
-            audioBuffer.flip();
-            queue.add(audioBuffer);
-        }
-        long readPosition = fc.position();
+        ShiftData.shiftDataByOffset(fc, extraSpaceRequired);
 
         //Jump over Id3 (if exists) and Flac Header
         fc.position(flacStream.getStartOfFlacInFile() + FlacStreamReader.FLAC_STREAM_IDENTIFIER_LENGTH);
         writeAllNonAudioData(tag, fc, blockInfo, flacStream, FlacTagCreator.DEFAULT_PADDING);
-
-        long writePosition = fc.position();
-
-        fc.position(readPosition);
-        while (fc.position() < originalFileSize)
-        {
-            //Read next chunk
-            ByteBuffer audioBuffer = ByteBuffer.allocateDirect(chunkSize);
-            fc.read(audioBuffer);
-            readPosition=fc.position();
-            audioBuffer.flip();
-            queue.add(audioBuffer);
-
-            //Write previous chunk
-            fc.position(writePosition);
-            fc.write(queue.remove());
-            writePosition=fc.position();
-
-            fc.position(readPosition);
-        }
-        fc.position(writePosition);
-        fc.write(queue.remove());
     }
 
     private void writeStreamBlock(FileChannel fc, MetadataBlockInfo blockInfo) throws IOException

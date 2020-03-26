@@ -1291,207 +1291,6 @@ public abstract class AbstractID3v2Tag extends AbstractID3Tag implements Tag
     }
 
     /**
-     * Adjust the length of the  padding at the beginning of the MP3 file, this is only called when there is currently
-     * not enough space before the start of the audio to write the tag.
-     * <p/>
-     * A new file will be created with enough size to fit the <code>ID3v2</code> tag.
-     * The old file will be deleted, and the new file renamed.
-     *
-     * @param paddingSize This is the (new) total size required to store tag before audio
-     * @param audioStart  Start of the audio data in the file
-     * @param file        The file to adjust the padding length of
-     * @throws FileNotFoundException if the file exists but is a directory
-     *                               rather than a regular file or cannot be opened for any other
-     *                               reason
-     * @throws IOException           on any I/O error
-     */
-    public void adjustPadding(File file, int paddingSize, long audioStart) throws FileNotFoundException, IOException
-    {
-        logger.finer("Need to move audio file to accommodate tag");
-        if (TagOptionSingleton.getInstance().isPreserveFileIdentity()) {
-            shiftAudio(file, paddingSize, audioStart);
-        } else {
-            adjustPaddingWithTempFile(file, paddingSize, audioStart);
-        }
-    }
-
-    private void adjustPaddingWithTempFile(final File file, final int paddingSize, final long audioStart) throws IOException {
-        logger.finer("Adjusting padding with temp file.");
-        FileChannel fcIn = null;
-        FileChannel fcOut;
-
-        //Create buffer holds the necessary padding
-        ByteBuffer paddingBuffer = ByteBuffer.wrap(new byte[paddingSize]);
-
-        //Create Temporary File and write channel, make sure it is locked
-        File paddedFile;
-
-        try
-        {
-            paddedFile = File.createTempFile(Utils.getBaseFilenameForTempFile(file), ".new", file.getParentFile());
-            logger.finest("Created temp file:" + paddedFile.getName() + " for " + file.getName());
-        }
-        //Vista:Can occur if have Write permission on folder this file would be created in Denied
-        catch (IOException ioe)
-        {
-            logger.log(Level.SEVERE, ioe.getMessage(), ioe);
-            if (ioe.getMessage().equals(FileSystemMessage.ACCESS_IS_DENIED.getMsg()))
-            {
-                logger.severe(ErrorMessage.GENERAL_WRITE_FAILED_TO_CREATE_TEMPORARY_FILE_IN_FOLDER.getMsg(file.getName(), file.getParentFile().getPath()));
-                throw new UnableToCreateFileException(ErrorMessage.GENERAL_WRITE_FAILED_TO_CREATE_TEMPORARY_FILE_IN_FOLDER.getMsg(file.getName(), file.getParentFile().getPath()));
-            }
-            else
-            {
-                logger.severe(ErrorMessage.GENERAL_WRITE_FAILED_TO_CREATE_TEMPORARY_FILE_IN_FOLDER.getMsg(file.getName(), file.getParentFile().getPath()));
-                throw new UnableToCreateFileException(ErrorMessage.GENERAL_WRITE_FAILED_TO_CREATE_TEMPORARY_FILE_IN_FOLDER.getMsg(file.getName(), file.getParentFile().getPath()));
-            }
-        }
-
-        try
-        {
-            fcOut = new FileOutputStream(paddedFile).getChannel();
-        }
-        //Vista:Can occur if have special permission Create Folder/Append Data denied
-        catch (FileNotFoundException ioe)
-        {
-            logger.log(Level.SEVERE, ioe.getMessage(), ioe);
-            logger.severe(ErrorMessage.GENERAL_WRITE_FAILED_TO_MODIFY_TEMPORARY_FILE_IN_FOLDER.getMsg(file.getName(), file.getParentFile().getPath()));
-            throw new UnableToModifyFileException(ErrorMessage.GENERAL_WRITE_FAILED_TO_MODIFY_TEMPORARY_FILE_IN_FOLDER.getMsg(file.getName(), file.getParentFile().getPath()));
-        }
-
-        try
-        {
-            //Create read channel from original file
-            //TODO lock so cant be modified by anything else whilst reading from it ?
-            fcIn = new FileInputStream(file).getChannel();
-
-            //Write padding to new file (this is where the tag will be written to later)
-            long written = fcOut.write(paddingBuffer);
-
-            //Write rest of file starting from audio
-            logger.finer("Copying:" + (file.length() - audioStart) + "bytes");
-
-            //If the amount to be copied is very large we split into 10MB lumps to try and avoid
-            //out of memory errors
-            long audiolength = file.length() - audioStart;
-            if (audiolength <= MAXIMUM_WRITABLE_CHUNK_SIZE)
-            {
-                fcIn.position(audioStart);
-                long written2 = fcOut.transferFrom(fcIn, paddingSize, audiolength);
-                logger.finer("Written padding:" + written + " Data:" + written2);
-                if (written2 != audiolength)
-                {
-                    throw new RuntimeException(ErrorMessage.MP3_UNABLE_TO_ADJUST_PADDING.getMsg(audiolength, written2));
-                }
-            }
-            else
-            {
-                long noOfChunks = audiolength / MAXIMUM_WRITABLE_CHUNK_SIZE;
-                long lastChunkSize = audiolength % MAXIMUM_WRITABLE_CHUNK_SIZE;
-                long written2 = 0;
-                for (int i = 0; i < noOfChunks; i++)
-                {
-                    written2 += fcIn.transferTo(audioStart + (i * MAXIMUM_WRITABLE_CHUNK_SIZE), MAXIMUM_WRITABLE_CHUNK_SIZE, fcOut);
-                }
-                written2 += fcIn.transferTo(audioStart + (noOfChunks * MAXIMUM_WRITABLE_CHUNK_SIZE), lastChunkSize, fcOut);
-                logger.finer("Written padding:" + written + " Data:" + written2);
-                if (written2 != audiolength)
-                {
-                    throw new RuntimeException(ErrorMessage.MP3_UNABLE_TO_ADJUST_PADDING.getMsg(audiolength, written2));
-                }
-            }
-
-            //Store original modification time
-            long lastModified = file.lastModified();
-
-            //Close Channels and locks
-            if (fcIn != null)
-            {
-                if (fcIn.isOpen())
-                {
-                    fcIn.close();
-                }
-            }
-
-            if (fcOut != null)
-            {
-                if (fcOut.isOpen())
-                {
-                    fcOut.close();
-                }
-            }
-
-            //Replace file with paddedFile
-            replaceFile(file, paddedFile);
-
-            //Update modification time
-            //TODO is this the right file ?
-            paddedFile.setLastModified(lastModified);
-        }
-        catch (UnableToRenameFileException ure)
-        {
-            paddedFile.delete();
-            throw ure;
-        }
-        finally
-        {
-            try
-            {
-                //Whatever happens ensure all locks and channels are closed/released
-                if (fcIn != null)
-                {
-                    if (fcIn.isOpen())
-                    {
-                        fcIn.close();
-                    }
-                }
-
-                if (fcOut != null)
-                {
-                    if (fcOut.isOpen())
-                    {
-                        fcOut.close();
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                logger.log(Level.WARNING, "Problem closing channels and locks:" + e.getMessage(), e);
-            }
-        }
-    }
-
-
-
-    /**
-     * Shift the Audio so further down to provide space for the larger tag data
-     *
-     * @param file file
-     * @param tagSize size we need for the tags
-     * @param audioStart position where the audio starts (before adjustment)
-     * @throws IOException if something goes wrong
-     */
-    private void shiftAudio(final File file, final int tagSize, final long audioStart) throws IOException
-    {
-        if (tagSize <= audioStart)
-        {
-            // nothing to do
-            logger.finest("padding not required. nothing to do.");
-            return;
-        }
-
-        try(SeekableByteChannel fc = Files.newByteChannel(file.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE))
-        {
-            fc.position(audioStart);
-            ShiftData.shiftDataByOffset(fc, (int)(tagSize - audioStart));
-        }
-        catch(IOException ioe)
-        {
-            throw ioe;
-        }
-    }
-
-    /**
      * Write the data from the buffer to the file
      *
      * @param file
@@ -1504,39 +1303,20 @@ public abstract class AbstractID3v2Tag extends AbstractID3Tag implements Tag
      */
     protected void writeBufferToFile(File file, ByteBuffer headerBuffer, byte[] bodyByteBuffer, int padding, int sizeIncPadding, long audioStartLocation) throws IOException
     {
-        FileChannel fc = null;
-        FileLock fileLock = null;
-
-        //We need to adjust location of audio file if true
-        if (sizeIncPadding > audioStartLocation)
+        try(SeekableByteChannel fc = Files.newByteChannel(file.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE))
         {
-            logger.finest("Adjusting Padding");
-            adjustPadding(file, sizeIncPadding, audioStartLocation);
-        }
-
-        try
-        {
-            fc = new RandomAccessFile(file, "rw").getChannel();
-            fileLock = getFileLockForWriting(fc, file.getPath());
+            //We need to adjust location of audio file if true
+            if (sizeIncPadding > audioStartLocation)
+            {
+                fc.position(audioStartLocation);
+                ShiftData.shiftDataByOffset(fc, (int)(sizeIncPadding - audioStartLocation));
+            }
+            fc.position(0);
             fc.write(headerBuffer);
             fc.write(ByteBuffer.wrap(bodyByteBuffer));
             fc.write(ByteBuffer.wrap(new byte[padding]));
         }
-        catch (FileNotFoundException fe)
-        {
-            logger.log(Level.SEVERE, getLoggingFilename() + fe.getMessage(), fe);
-            if (fe.getMessage().contains(FileSystemMessage.ACCESS_IS_DENIED.getMsg()) || fe.getMessage().contains(FileSystemMessage.PERMISSION_DENIED.getMsg()))
-            {
-                logger.severe(ErrorMessage.GENERAL_WRITE_FAILED_TO_OPEN_FILE_FOR_EDITING.getMsg(file.getPath()));
-                throw new UnableToModifyFileException(ErrorMessage.GENERAL_WRITE_FAILED_TO_OPEN_FILE_FOR_EDITING.getMsg(file.getPath()));
-            }
-            else
-            {
-                logger.severe(ErrorMessage.GENERAL_WRITE_FAILED_TO_OPEN_FILE_FOR_EDITING.getMsg(file.getPath()));
-                throw new UnableToCreateFileException(ErrorMessage.GENERAL_WRITE_FAILED_TO_OPEN_FILE_FOR_EDITING.getMsg(file.getPath()));
-            }
-        }
-        catch (IOException ioe)
+        catch(IOException ioe)
         {
             logger.log(Level.SEVERE, getLoggingFilename() + ioe.getMessage(), ioe);
             if (ioe.getMessage().equals(FileSystemMessage.ACCESS_IS_DENIED.getMsg()))
@@ -1548,83 +1328,6 @@ public abstract class AbstractID3v2Tag extends AbstractID3Tag implements Tag
             {
                 logger.severe(ErrorMessage.GENERAL_WRITE_FAILED_TO_OPEN_FILE_FOR_EDITING.getMsg(file.getParentFile().getPath()));
                 throw new UnableToCreateFileException(ErrorMessage.GENERAL_WRITE_FAILED_TO_OPEN_FILE_FOR_EDITING.getMsg(file.getParentFile().getPath()));
-            }
-        }
-        finally
-        {
-            if (fc != null)
-            {
-                if (fileLock != null)
-                {
-                    fileLock.release();
-                }
-                fc.close();
-            }
-        }
-    }
-
-    /**
-     * Replace originalFile with the contents of newFile
-     * <p/>
-     * Both files must exist in the same folder so that there are no problems with filesystem mount points
-     *
-     * @param newFile
-     * @param originalFile
-     * @throws IOException
-     */
-    private void replaceFile(File originalFile, File newFile) throws IOException
-    {
-        boolean renameOriginalResult;
-        //Rename Original File to make a backup in case problem with new file
-        File originalFileBackup = new File(originalFile.getAbsoluteFile().getParentFile().getPath(), AudioFile.getBaseFilename(originalFile) + ".old");
-        //If already exists modify the suffix
-        int count = 1;
-        while (originalFileBackup.exists())
-        {
-            originalFileBackup = new File(originalFile.getAbsoluteFile().getParentFile().getPath(), AudioFile.getBaseFilename(originalFile) + ".old" + count);
-            count++;
-        }
-
-        renameOriginalResult = originalFile.renameTo(originalFileBackup);
-        if (!renameOriginalResult)
-        {
-            logger.warning(ErrorMessage.GENERAL_WRITE_FAILED_TO_RENAME_ORIGINAL_FILE_TO_BACKUP.getMsg(originalFile.getAbsolutePath(), originalFileBackup.getName()));
-            newFile.delete();
-            throw new UnableToRenameFileException(ErrorMessage.GENERAL_WRITE_FAILED_TO_RENAME_ORIGINAL_FILE_TO_BACKUP.getMsg(originalFile.getAbsolutePath(), originalFileBackup.getName()));
-        }
-
-        //Rename new Temporary file to the final file
-        boolean renameResult = newFile.renameTo(originalFile);
-        if (!renameResult)
-        {
-            //Renamed failed so lets do some checks rename the backup back to the original file
-            //New File doesnt exist
-            if (!newFile.exists())
-            {
-                logger.warning(ErrorMessage.GENERAL_WRITE_FAILED_NEW_FILE_DOESNT_EXIST.getMsg(newFile.getAbsolutePath()));
-            }
-
-            //Rename the backup back to the original
-            renameOriginalResult = originalFileBackup.renameTo(originalFile);
-            if (!renameOriginalResult)
-            {
-                //TODO now if this happens we are left with testfile.old instead of testfile.mp3
-                logger.warning(ErrorMessage.GENERAL_WRITE_FAILED_TO_RENAME_ORIGINAL_BACKUP_TO_ORIGINAL.getMsg(originalFileBackup.getAbsolutePath(), originalFile.getName()));
-            }
-
-
-            logger.warning(ErrorMessage.GENERAL_WRITE_FAILED_TO_RENAME_TO_ORIGINAL_FILE.getMsg(originalFile.getAbsolutePath(), newFile.getName()));
-            newFile.delete();
-            throw new UnableToRenameFileException(ErrorMessage.GENERAL_WRITE_FAILED_TO_RENAME_TO_ORIGINAL_FILE.getMsg(originalFile.getAbsolutePath(), newFile.getName()));
-        }
-        else
-        {
-            //Rename was okay so we can now deleteField the backup of the original
-            boolean deleteResult = originalFileBackup.delete();
-            if (!deleteResult)
-            {
-                //Not a disaster but can't deleteField the backup so make a warning
-                logger.warning(ErrorMessage.GENERAL_WRITE_WARNING_UNABLE_TO_DELETE_BACKUP_FILE.getMsg(originalFileBackup.getAbsolutePath()));
             }
         }
     }
@@ -3147,5 +2850,4 @@ public abstract class AbstractID3v2Tag extends AbstractID3Tag implements Tag
     {
         this.endLocationInFile = endLocationInFile;
     }
-
 }
