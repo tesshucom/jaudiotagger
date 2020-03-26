@@ -33,15 +33,15 @@ import org.jaudiotagger.tag.id3.valuepair.StandardIPLSKey;
 import org.jaudiotagger.tag.images.Artwork;
 import org.jaudiotagger.tag.reference.Languages;
 import org.jaudiotagger.tag.reference.PictureTypes;
+import org.jaudiotagger.utils.ShiftData;
 
 import java.io.*;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
-import java.nio.channels.WritableByteChannel;
+import java.nio.channels.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.logging.Level;
 
@@ -1309,7 +1309,7 @@ public abstract class AbstractID3v2Tag extends AbstractID3Tag implements Tag
     {
         logger.finer("Need to move audio file to accommodate tag");
         if (TagOptionSingleton.getInstance().isPreserveFileIdentity()) {
-            adjustPaddingInPlace(file, paddingSize, audioStart);
+            shiftAudio(file, paddingSize, audioStart);
         } else {
             adjustPaddingWithTempFile(file, paddingSize, audioStart);
         }
@@ -1461,103 +1461,33 @@ public abstract class AbstractID3v2Tag extends AbstractID3Tag implements Tag
         }
     }
 
+
+
     /**
-     * Adjust the padding "in place", i.e. without creating a temp file. This is useful in order
-     * to preserve file identity. See {@link TagOptionSingleton#isPreserveFileIdentity()}.
+     * Shift the Audio so further down to provide space for the larger tag data
      *
      * @param file file
-     * @param paddingSize size we need for the tags
+     * @param tagSize size we need for the tags
      * @param audioStart position where the audio starts (before adjustment)
      * @throws IOException if something goes wrong
      */
-    private void adjustPaddingInPlace(final File file, final int paddingSize, final long audioStart) throws IOException {
-        if (paddingSize == audioStart)
+    private void shiftAudio(final File file, final int tagSize, final long audioStart) throws IOException
+    {
+        if (tagSize <= audioStart)
         {
             // nothing to do
             logger.finest("padding not required. nothing to do.");
             return;
         }
-        logger.finer("Adjusting padding in place.");
-        // we cannot use channels because of bugs in the macOS implementation
-        // when moving data within the same file
-        RandomAccessFile randomAccessFile = null;
-        try
+
+        try(SeekableByteChannel fc = Files.newByteChannel(file.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE))
         {
-            final long originalFileLength = file.length();
-            final long audioLength = originalFileLength - audioStart;
-            randomAccessFile = new RandomAccessFile(file, "rw");
-            final long toOffset = -paddingSize;
-            final long fromOffset = -audioStart;
-            final byte[] buf = new byte[IN_PLACE_CHUNK_SIZE];
-            if (paddingSize > audioStart)
-            {
-                // we have to shift the audio to the back
-                // that means we have to start with the back in order not to overwrite any good data
-
-                // increase file size
-                randomAccessFile.setLength(paddingSize + audioLength);
-                long shift = paddingSize - audioStart;
-
-                for (long pos=audioLength; pos>0;)
-                {
-                    // chunk size
-                    final int chunkSize = Math.min((int)pos, buf.length);
-                    // read chunk
-                    randomAccessFile.seek(pos - chunkSize + audioStart);
-                    int read = 0;
-                    while (read != chunkSize) {
-                        final int justRead = randomAccessFile.read(buf, read, chunkSize - read);
-                        if (justRead > 0) read += justRead;
-                        else break;
-                    }
-                    // write chunk
-                    if (read == chunkSize) {
-                        randomAccessFile.seek(pos - chunkSize + shift + audioStart);
-                        randomAccessFile.write(buf, 0, chunkSize);
-                        pos -= chunkSize;
-                    } else {
-                        break;
-                    }
-                }
-            }
-            else {
-
-                // currently this part is not called, as jaudiotagger does not support
-                // shrinking of the ID3 file portion
-
-                // we have to shift the audio to the front
-                // that means we have to start with the front in order not to overwrite any good data
-
-                for (long pos = 0; pos<audioLength;)
-                {
-                    // read chunk
-                    randomAccessFile.seek(pos + fromOffset);
-                    final int justRead = randomAccessFile.read(buf);
-                    if (justRead > 0) {
-                        randomAccessFile.seek(pos + toOffset);
-                        randomAccessFile.write(buf, 0, justRead);
-                        pos += justRead;
-                    } else {
-                        break;
-                    }
-                }
-                // decrease file size
-                randomAccessFile.setLength(paddingSize + audioLength);
-            }
+            fc.position(audioStart);
+            ShiftData.shiftDataByOffset(fc, (int)(tagSize - audioStart));
         }
-        finally
+        catch(IOException ioe)
         {
-            try
-            {
-                if (randomAccessFile != null)
-                {
-                    randomAccessFile.close();
-                }
-            }
-            catch (Exception e)
-            {
-                logger.log(Level.WARNING, "Problem closing random access file:" + e.getMessage(), e);
-            }
+            throw ioe;
         }
     }
 
