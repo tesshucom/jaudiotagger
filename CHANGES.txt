@@ -108,6 +108,7 @@ Summarise Changes
 #247:Not able to save this m4a
 #302:java.nio.BufferUnderflowException when reading a corrupted mp3 file
 #303:java.lang.NullPointerException when reading a corrupted audio file
+#259:For Mp3 change adjustPaddingInPlace() so uses FileChannel like FlacTagWriter.insertUsingChunks()
 
 2.2.5
 #033:Added getAudioStartPos() and getAudioEndPos() methods to AudioHeader interface and implemented for most formats
