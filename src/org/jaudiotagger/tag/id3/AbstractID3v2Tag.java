@@ -1279,15 +1279,22 @@ public abstract class AbstractID3v2Tag extends AbstractID3Tag implements Tag
      */
     protected int calculateTagSize(int tagSize, int preferredSize)
     {
-        /** We can fit in the tag so no adjustments required */
-        if (tagSize <= preferredSize)
+        if(TagOptionSingleton.getInstance().isId3v2PaddingWillShorten())
         {
-            return preferredSize;
+            //We just use reuired size
+            return tagSize;
         }
-        /** There is not enough room as we need to move the audio file we might
-         *  as well increase it more than neccessary for future changes
-         */
-        return tagSize + TAG_SIZE_INCREMENT;
+        else
+        {
+            //We can fit in the tag so no adjustments required
+            if (tagSize <= preferredSize)
+            {
+                return preferredSize;
+            }
+            //There is not enough room as we need to move the audio file we might
+            //as well increase it more than necessary for future changes
+            return tagSize + TAG_SIZE_INCREMENT;
+        }
     }
 
     /**
@@ -1307,6 +1314,11 @@ public abstract class AbstractID3v2Tag extends AbstractID3Tag implements Tag
         {
             //We need to adjust location of audio file if true
             if (sizeIncPadding > audioStartLocation)
+            {
+                fc.position(audioStartLocation);
+                ShiftData.shiftDataByOffset(fc, (int)(sizeIncPadding - audioStartLocation));
+            }
+            else if(TagOptionSingleton.getInstance().isId3v2PaddingWillShorten() && sizeIncPadding < audioStartLocation)
             {
                 fc.position(audioStartLocation);
                 ShiftData.shiftDataByOffset(fc, (int)(sizeIncPadding - audioStartLocation));

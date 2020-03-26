@@ -5,6 +5,7 @@ import org.jaudiotagger.tag.TagOptionSingleton;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 
 /** Shift Data to allow metadata to be fitted inside existing file
@@ -16,12 +17,13 @@ public class ShiftData
      * Reads/writes starting from end of file in chunks so works on large files on low memory systems
      *
      * @param  fc
-     * @param  offset
+     * @param  offset (if negative writes the data earlier (i,e smaller file)
      * @throws IOException
      * @throws CannotWriteException
      */
     public static void shiftDataByOffset(SeekableByteChannel fc, int offset) throws IOException
     {
+        long origFileSize = fc.size();
         long startPos = fc.position();
         long amountToBeWritten = fc.size() - startPos;
         int chunkSize = (int) TagOptionSingleton.getInstance().getWriteChunkSize();
@@ -63,6 +65,14 @@ public class ShiftData
             chunkBuffer.flip();
             fc.position(startPos + offset);
             fc.write(chunkBuffer);
+        }
+
+        if(fc instanceof SeekableByteChannel)
+        {
+            if(offset < 0)
+            {
+                fc.truncate(origFileSize + offset);
+            }
         }
     }
 }
