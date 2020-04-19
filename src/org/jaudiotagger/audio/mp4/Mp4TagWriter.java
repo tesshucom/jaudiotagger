@@ -1029,8 +1029,6 @@ public class Mp4TagWriter
         int additionalMetaSizeThatWontFitWithinMetaAtom  = sizeRequiredByNewIlstAtom - existingSizeOfIlstData;
         boolean isMdatDataMoved     = adjustStcosIfNoSuitableTopLevelAtom(topLevelFreeSize, topLevelFreeAtomComesBeforeMdatAtomAndAfterMetadata, additionalMetaSizeThatWontFitWithinMetaAtom, stcos, moovHeader, mdatHeader);
 
-        System.out.println("Increase MetalevelAtom by:"+additionalMetaSizeThatWontFitWithinMetaAtom+":"+topLevelFreeSize+":"+isMdatDataMoved);
-
         //Edit and rewrite the Moov header inc udta and meta headers)
         adjustSizeOfMoovHeader(moovHeader, moovBuffer, additionalMetaSizeThatWontFitWithinMetaAtom, udtaHeader, metaHeader);
 
