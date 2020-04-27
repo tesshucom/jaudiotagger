@@ -84,11 +84,6 @@ public abstract class AbstractID3v2Tag extends AbstractID3Tag implements Tag
 
     protected static final int TAG_SIZE_INCREMENT = 100;
 
-    //The max size we try to write in one go to avoid out of memory errors (10mb)
-    private static final long MAXIMUM_WRITABLE_CHUNK_SIZE = 10000000;
-    //The max size we try to write in one go during "in place" operations to avoid memory issues
-    private static final int IN_PLACE_CHUNK_SIZE = 1024 * 1024;
-
     /**
      * Map of all frames for this tag
      */
