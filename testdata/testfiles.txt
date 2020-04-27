@@ -131,3 +131,4 @@ test609.wav,no,299, BufferUnderflowException on read
 test610.aid, no, 300: BufferUnderFlow reading odd sized comment chunk but missing extra byte
 test302a.mp3, yes, 302: Corrupt mp3 with invalid encoding bit set messing up frame size
 test303.mp3, yes, 303: java.lang.NullPointerException when reading a corrupted audio file
+test309.m4a, no, 309: Tag edition fails for m4a file - and corrupts tag

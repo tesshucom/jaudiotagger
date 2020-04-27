@@ -1104,6 +1104,7 @@ public class Mp4TagWriter
         //but we replace any neroTags atoms with free atoms as these cause problems
         if (neroTagsHeader != null)
         {
+            moovBuffer.limit(moovBuffer.capacity());
             moovBuffer.position(positionOfStartOfIlstAtomInMoovBuffer + existingSizeOfIlstData);
             writeFromEndOfIlstToNeroTagsAndMakeNeroFree(moovHeader, moovBuffer, fc, neroTagsHeader);
 
