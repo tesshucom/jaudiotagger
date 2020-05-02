@@ -18,15 +18,10 @@
  */
 package org.jaudiotagger.audio.mp4;
 
-import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.exceptions.CannotWriteException;
-import org.jaudiotagger.audio.generic.AudioFileWriter;
 import org.jaudiotagger.audio.generic.AudioFileWriter2;
-import org.jaudiotagger.audio.wav.WavTagWriter;
 import org.jaudiotagger.tag.Tag;
 
-import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.file.Path;
 
 /**
