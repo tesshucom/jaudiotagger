@@ -4,8 +4,10 @@ import org.jaudiotagger.AbstractTestCase;
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
 import org.jaudiotagger.audio.mp3.MP3AudioHeader;
+import org.jaudiotagger.audio.mp3.MP3File;
 import org.jaudiotagger.tag.FieldKey;
 import org.jaudiotagger.tag.TagOptionSingleton;
+import org.jaudiotagger.tag.id3.ID3v24Tag;
 import org.jaudiotagger.tag.images.Artwork;
 import org.jaudiotagger.tag.images.ArtworkFactory;
 
@@ -28,12 +30,14 @@ public class Issue301Test extends AbstractTestCase
         Exception ex=null;
         try
         {
+            final int AUDIO_LENGTH = 113265;
+
             File testFile = AbstractTestCase.copyAudioToTmp("test47.mp3",new File("testStripPadding.mp3"));
             AudioFile af = AudioFileIO.read(testFile);
             assertNotNull(af.getTag());
             System.out.println(af.getTag());
             assertEquals(161,((MP3AudioHeader)af.getAudioHeader()).getMp3StartByte());
-            assertEquals(113426,testFile.length());
+            assertEquals(161 + AUDIO_LENGTH,testFile.length());
 
             //Shorten data but dont request to shrink so same size
             TagOptionSingleton.getInstance().setId3v2PaddingWillShorten(false);
@@ -43,7 +47,7 @@ public class Issue301Test extends AbstractTestCase
             assertNotNull(af.getTag());
             System.out.println(af.getTag());
             assertEquals(161,((MP3AudioHeader)af.getAudioHeader()).getMp3StartByte());
-            assertEquals(113426,testFile.length());
+            assertEquals(161 + AUDIO_LENGTH,testFile.length());
 
             //Now shorter and request to shrunk so removes all padding
             TagOptionSingleton.getInstance().setId3v2PaddingWillShorten(true);
@@ -53,7 +57,7 @@ public class Issue301Test extends AbstractTestCase
             assertNotNull(af.getTag());
             System.out.println(af.getTag());
             assertEquals(127,((MP3AudioHeader)af.getAudioHeader()).getMp3StartByte());
-            assertEquals(113392,testFile.length());
+            assertEquals(127 + AUDIO_LENGTH,testFile.length());
 
             //Now a bit longer because more data needed but request to shorten so no spare padding added
             af.getTag().setField(FieldKey.ALBUM,"SlightlyLonger");
@@ -62,7 +66,7 @@ public class Issue301Test extends AbstractTestCase
             assertNotNull(af.getTag());
             System.out.println(af.getTag());
             assertEquals(134,((MP3AudioHeader)af.getAudioHeader()).getMp3StartByte());
-            assertEquals(113399,testFile.length());
+            assertEquals(134 + AUDIO_LENGTH,testFile.length());
 
             //Now a bit longer and because have to rewrite audio data anyway we add some spare padding
             TagOptionSingleton.getInstance().setId3v2PaddingWillShorten(false);
@@ -72,9 +76,9 @@ public class Issue301Test extends AbstractTestCase
             assertNotNull(af.getTag());
             System.out.println(af.getTag());
             assertEquals(236,((MP3AudioHeader)af.getAudioHeader()).getMp3StartByte());
-            assertEquals(113501,testFile.length());
+            assertEquals(236 + AUDIO_LENGTH,testFile.length());
 
-            //Nowshorter and set reemove padding
+            //Nowshorter and set remove padding
             TagOptionSingleton.getInstance().setId3v2PaddingWillShorten(true);
             af.getTag().setField(FieldKey.ALBUM,"SlightlyLonger");
             af.commit();
@@ -82,7 +86,7 @@ public class Issue301Test extends AbstractTestCase
             assertNotNull(af.getTag());
             System.out.println(af.getTag());
             assertEquals(134,((MP3AudioHeader)af.getAudioHeader()).getMp3StartByte());
-            assertEquals(113399,testFile.length());
+            assertEquals(134 + AUDIO_LENGTH,testFile.length());
         }
         catch(Exception e)
         {
@@ -92,5 +96,40 @@ public class Issue301Test extends AbstractTestCase
         assertNull(ex);
     }
 
+    public void testWriteLessDataAndShrink2() throws Exception
+    {
+        File orig = new File("testdata", "test308.mp3");
+        if (!orig.isFile())
+        {
+            System.err.println("Unable to test file - not available");
+            return;
+        }
 
+        Exception ex=null;
+        try
+        {
+            final int AUDIO_LENGTH = 5048112;
+            File testFile = AbstractTestCase.copyAudioToTmp("test308.mp3",new File("test308.mp3"));
+            AudioFile af = AudioFileIO.read(testFile);
+            assertNotNull(af.getTag());
+            assertEquals(1856886,((MP3AudioHeader)af.getAudioHeader()).getMp3StartByte());
+            assertEquals(1856886 + AUDIO_LENGTH, testFile.length());
+            System.out.println(af.getTag());
+
+            TagOptionSingleton.getInstance().setId3v2PaddingWillShorten(true);
+            af.getTag().deleteArtworkField();
+            af.commit();
+            af = AudioFileIO.read(testFile);
+            assertNotNull(af.getTag());
+            System.out.println(af.getTag());
+            assertEquals(446,((MP3AudioHeader)af.getAudioHeader()).getMp3StartByte());
+            assertEquals(446 + AUDIO_LENGTH, testFile.length());
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+            ex=e;
+        }
+        assertNull(ex);
+    }
 }

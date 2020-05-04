@@ -852,7 +852,7 @@ public class Mp4TagWriter
             //Position after MoovBuffer in file
             fc.position(endOfOriginalMoovAtom);
 
-            ShiftData.shiftDataByOffset(fc, udtaHeader.getLength());
+            ShiftData.shiftDataByOffsetToMakeSpace(fc, udtaHeader.getLength());
 
             //Go back to position just after MoovBuffer in file
             fc.position(endOfOriginalMoovAtom);
@@ -975,7 +975,7 @@ public class Mp4TagWriter
             fc.position(endOfOriginalMoovAtom);
 
             //Shift the existing data after Moov Atom by the size of the new meta atom (includes ilst under it)
-            ShiftData.shiftDataByOffset(fc, metaBox.getHeader().getLength());
+            ShiftData.shiftDataByOffsetToMakeSpace(fc, metaBox.getHeader().getLength());
 
             //Now Write new ilst data, continuing from the end of the original Moov atom
             fc.position(endOfOriginalMoovAtom);
@@ -1073,7 +1073,7 @@ public class Mp4TagWriter
             fc.position(endOfOriginalMoovAtom);
 
             //Shift the existing data after Moov Atom by the increased size of ilst data
-            ShiftData.shiftDataByOffset(fc, additionalMetaSizeThatWontFitWithinMetaAtom);
+            ShiftData.shiftDataByOffsetToMakeSpace(fc, additionalMetaSizeThatWontFitWithinMetaAtom);
 
             //Now Write new ilst data, starting at the same location as the oldiLst atom
             fc.position(moovHeader.getFilePos() + Mp4BoxHeader.HEADER_LENGTH + positionOfStartOfIlstAtomInMoovBuffer);

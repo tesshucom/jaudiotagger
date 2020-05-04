@@ -21,6 +21,7 @@ import org.jaudiotagger.audio.generic.Utils;
 import org.jaudiotagger.audio.mp3.MP3File;
 import org.jaudiotagger.logging.ErrorMessage;
 import org.jaudiotagger.logging.FileSystemMessage;
+import org.jaudiotagger.logging.Hex;
 import org.jaudiotagger.tag.*;
 import org.jaudiotagger.tag.datatype.DataTypes;
 import org.jaudiotagger.tag.datatype.Pair;
@@ -1274,7 +1275,7 @@ public abstract class AbstractID3v2Tag extends AbstractID3Tag implements Tag
     {
         if(TagOptionSingleton.getInstance().isId3v2PaddingWillShorten())
         {
-            //We just use reuired size
+            //We just use required size
             return tagSize;
         }
         else
@@ -1309,17 +1310,22 @@ public abstract class AbstractID3v2Tag extends AbstractID3Tag implements Tag
             if (sizeIncPadding > audioStartLocation)
             {
                 fc.position(audioStartLocation);
-                ShiftData.shiftDataByOffset(fc, (int)(sizeIncPadding - audioStartLocation));
+                ShiftData.shiftDataByOffsetToMakeSpace(fc, (int)(sizeIncPadding - audioStartLocation));
             }
             else if(TagOptionSingleton.getInstance().isId3v2PaddingWillShorten() && sizeIncPadding < audioStartLocation)
             {
                 fc.position(audioStartLocation);
-                ShiftData.shiftDataByOffset(fc, (int)(sizeIncPadding - audioStartLocation));
+                ShiftData.shiftDataByOffsetToShrinkSpace(fc, (int)(audioStartLocation - sizeIncPadding));
             }
             fc.position(0);
             fc.write(headerBuffer);
+            System.out.println("AfterHeader:"+Hex.asHex(fc.position()));
             fc.write(ByteBuffer.wrap(bodyByteBuffer));
+            System.out.println("AfterBody:"+Hex.asHex(fc.position()));
             fc.write(ByteBuffer.wrap(new byte[padding]));
+            System.out.println("AfterPadding:"+Hex.asHex(fc.position()));
+
+
         }
         catch(IOException ioe)
         {

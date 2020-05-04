@@ -114,6 +114,7 @@ Summarise Changes
 #301:In Mp3 when metadata becomes shorter we dont reclaim the space instead just left as padding
 #209:Write chunk size property not observed
 #309:Tag edition fails for m4a file - and corrupts tag
+#308:corrupt audio files after fix
 
 2.2.5
 #033:Added getAudioStartPos() and getAudioEndPos() methods to AudioHeader interface and implemented for most formats

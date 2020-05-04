@@ -20,7 +20,7 @@ public class ShiftData
      * @throws IOException
      * @throws CannotWriteException
      */
-    public static void shiftDataByOffset(SeekableByteChannel fc, int offset) throws IOException
+    public static void shiftDataByOffsetToMakeSpace(SeekableByteChannel fc, int offset) throws IOException
     {
         long origFileSize = fc.size();
         long startPos = fc.position();
@@ -72,6 +72,63 @@ public class ShiftData
             {
                 fc.truncate(origFileSize + offset);
             }
+        }
+    }
+
+    /**
+     * Used by ID3 to shrink space by shrinkBy bytes before current position
+     * @param fc
+     * @param shrinkBy
+     * @throws IOException
+     */
+    public static void shiftDataByOffsetToShrinkSpace(SeekableByteChannel fc, int shrinkBy) throws IOException
+    {
+        long startPos = fc.position();
+        long amountToBeWritten = fc.size() - startPos;
+        int chunkSize = (int) TagOptionSingleton.getInstance().getWriteChunkSize();
+        long count = amountToBeWritten / chunkSize;
+        long mod = amountToBeWritten % chunkSize;
+
+        //Buffer to hold a chunk
+        ByteBuffer chunkBuffer = ByteBuffer.allocate(chunkSize);
+
+        //Start from start of data that needs to be shifted
+        long readPos  = startPos;
+        long writePos = startPos - shrinkBy;
+
+        for (int i = 0; i < count; i++)
+        {
+            //Read Data Into Buffer starting from start of data that has to be copied
+            fc.position(readPos);
+            fc.read(chunkBuffer);
+
+            //Now write to new location
+            chunkBuffer.flip();
+            fc.position(writePos);
+            fc.write(chunkBuffer);
+
+            //Rewind so can use in next iteration of loop
+            chunkBuffer.rewind();
+
+            readPos += chunkSize;
+            writePos += chunkSize;
+        }
+
+        if (mod > 0)
+        {
+            chunkBuffer = ByteBuffer.allocate((int) mod);
+            fc.position(readPos);
+            fc.read(chunkBuffer);
+
+            //Now write to new location
+            chunkBuffer.flip();
+            fc.position(writePos);
+            fc.write(chunkBuffer);
+        }
+
+        if(fc instanceof SeekableByteChannel)
+        {
+            fc.truncate(fc.position());
         }
     }
 }

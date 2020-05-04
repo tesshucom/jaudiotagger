@@ -421,7 +421,7 @@ public class FlacTagWriter
         logger.config(file + " Audio needs shifting:"+extraSpaceRequired);
 
         fc.position(audioStart);
-        ShiftData.shiftDataByOffset(fc, extraSpaceRequired);
+        ShiftData.shiftDataByOffsetToMakeSpace(fc, extraSpaceRequired);
 
         //Jump over Id3 (if exists) and Flac Header
         fc.position(flacStream.getStartOfFlacInFile() + FlacStreamReader.FLAC_STREAM_IDENTIFIER_LENGTH);
