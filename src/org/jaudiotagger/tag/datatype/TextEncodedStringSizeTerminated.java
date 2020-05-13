@@ -10,6 +10,7 @@ import java.nio.charset.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
 
 /**
  * Represents a String which is not delimited by null character.
@@ -78,9 +79,6 @@ public class TextEncodedStringSizeTerminated extends AbstractString
      */
     public void readByteArray(byte[] arr, int offset) throws InvalidDataTypeException
     {
-        logger.finest("Reading from array from offset:" + offset);
-
-
         //Decode sliced inBuffer
         ByteBuffer inBuffer;
         if(TagOptionSingleton.getInstance().isAndroid())
@@ -122,8 +120,10 @@ public class TextEncodedStringSizeTerminated extends AbstractString
         }
         //SetSize, important this is correct for finding the next datatype
         setSize(arr.length - offset);
-        logger.finest("Read SizeTerminatedString:" + value + " size:" + size);
-
+        if(logger.isLoggable(Level.FINEST))
+        {
+            logger.finest("Read SizeTerminatedString:" + value + " size:" + size);
+        }
     }
 
     /**
