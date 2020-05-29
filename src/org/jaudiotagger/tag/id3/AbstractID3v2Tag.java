@@ -1319,13 +1319,8 @@ public abstract class AbstractID3v2Tag extends AbstractID3Tag implements Tag
             }
             fc.position(0);
             fc.write(headerBuffer);
-            System.out.println("AfterHeader:"+Hex.asHex(fc.position()));
             fc.write(ByteBuffer.wrap(bodyByteBuffer));
-            System.out.println("AfterBody:"+Hex.asHex(fc.position()));
             fc.write(ByteBuffer.wrap(new byte[padding]));
-            System.out.println("AfterPadding:"+Hex.asHex(fc.position()));
-
-
         }
         catch(IOException ioe)
         {
